@@ -16,6 +16,7 @@ unsigned long debounceDelay = 5;
 byte velocity[N_BUTTONS] = { 127 };
 unsigned long buttonTimer[N_BUTTONS] = { 0 };
 int buttonTimeout = 10;
+int  BUTTON_MIDI_CH;
 
 //=============================================================================================================
 const int N_POTS = 8;
@@ -25,11 +26,15 @@ int potPState[N_POTS] = { 0 };  //estado anterior do potenciômetro
 int midiState[N_POTS] = { 0 };
 int midiPState[N_POTS] = { 0 };
 int CC[N_POTS] = { 1, 2, 3, 4, 5, 6, 7, 8 };  //int CC[N_POTS] = {11,12};
-int potThreshold = 25;
+int potThreshold = 35;
 unsigned long lastPotTime[N_POTS] = { 0 };
 unsigned long potTimer[N_POTS] = { 0 };
-int potTimeout = 200;
+int potTimeout = 150;
 int potVar = 0;
+byte midiCh = 1; //* Canal MIDI a ser usado
+byte cc = 1; //* O mais baixo MIDI CC a ser usado
+
+bool channelMenuOn = false;
 
 byte MIDI_CH = 0;  //0 - 15
 byte NN[N_BUTTONS] = { 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36 };
@@ -95,30 +100,32 @@ void buttons() {
 void channelMenu() {
 
   while (digitalRead(CHANNEL_BUTTON_PIN) == LOW) {
-    Serial.println("Botão Canal LOW");
+    Serial.println("Botão Canal Pressionado");
     channelMenuOn = true;
 
     // read pins from arduino
-    for (int i = 0; i < N_BUTTONS_ARDUINO; i++) {
-      buttonCState[i] = digitalRead(BUTTON_ARDUINO_PIN[i]);
+    for (int i = 0; i < N_BUTTONS; i++) {
+      my_mux.channel(i);
+      buttonCState[i] = digitalRead(g_common_pin);
+      buttonTimer[i] = millis() - lastDebounceTime[i];
     }
 
-    int nButtonsPerMuxSum = N_BUTTONS_ARDUINO; // offsets the buttonCState at every mux reading
+    int nButtonsPerMuxSum = N_BUTTONS; // offsets the buttonCState at every mux reading
 
-      // read the pins from every mux
-      for (int j = 0; j < N_MUX; j++) {
-        for (int i = 0; i < N_BUTTONS_PER_MUX[j]; i++) {
-          buttonCState[i + nButtonsPerMuxSum] = mux[j].readChannel(BUTTON_MUX_PIN[j][i]);
-          // Scale values to 0-1
+        for (int i = 0; i < N_BUTTONS; i++) {
+          buttonCState[i + nButtonsPerMuxSum] = digitalRead(g_common_pin);//.readChannel(g_common_pin);
+ 
           if (buttonCState[i + nButtonsPerMuxSum] > buttonMuxThreshold) {
             buttonCState[i + nButtonsPerMuxSum] = HIGH;
+            Serial.println("Channel Button HIGH");
           }
           else {
             buttonCState[i + nButtonsPerMuxSum] = LOW;
+             Serial.println("Channel Button LOW");
           }
         }
-        nButtonsPerMuxSum += N_BUTTONS_PER_MUX[j];
-      }
+//nButtonsPerMuxSum += N_BUTTONS_PER_MUX[j];
+
 
       for (int i = 0; i < N_BUTTONS; i++) { // Read the buttons connected to the Arduino
         if ((millis() - lastDebounceTime[i]) > debounceDelay) {
@@ -129,8 +136,8 @@ void channelMenu() {
             if (buttonCState[i] == LOW) {
               // DO STUFF
               BUTTON_MIDI_CH = i;
-              //Serial.print("Channel ");
-              //Serial.println(BUTTON_MIDI_CH);
+              Serial.print("Channel ");
+              Serial.println(BUTTON_MIDI_CH);
 
             }
             buttonPState[i] = buttonCState[i];
@@ -139,27 +146,7 @@ void channelMenu() {
       }
     }
 
-  } //end
-
-    //===============================================
-
-  //   cbuttonCState = digitalRead(CHANNEL_BUTTON_PIN);
-  //   cbuttonTimer = millis() - clastDebounceTime;
-
-  //   if (cbuttonTimer > buttonTimeout) {
-
-  //     if (cbuttonCState != cbuttonPState) {
-  //       clastDebounceTime = millis();
-
-  //       if (cbuttonCState == LOW) {
-  //         Serial.println("Botão Change ON");
-  //       } else {
-  //         Serial.println("Botão Change OFF");
-  //       }
-  //       cbuttonPState = cbuttonCState;
-  //     }
-  //   }
-  // }
+} //end
 
   void potenciometers() {
 
@@ -178,7 +165,8 @@ void channelMenu() {
       if (potTimer[i] < potTimeout) {
         if (midiPState[i] != midiState[i]) {
 
-          controlChange(MIDI_CH, CC[i], midiState[i]);
+          //controlChange(MIDI_CH, CC[i], midiState[i]);
+          controlChange(midiCh, cc + i, midiState[i]);
           MidiUSB.flush();
 
           Serial.print("Pot");
