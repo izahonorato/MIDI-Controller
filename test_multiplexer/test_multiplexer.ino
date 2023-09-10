@@ -15,6 +15,7 @@ unsigned long debounceDelay = 5;
 byte velocity[N_BUTTONS] = { 127 };
 unsigned long buttonTimer[N_BUTTONS] = { 0 };
 int buttonTimeout = 10;
+int BUTTON_MIDI_CH;
 
 //=============================================================================================================
 const int N_POTS = 8;
@@ -111,6 +112,7 @@ void channelMenu() {
           lastDebounceTime[i] = millis();
 
           if (buttonCState[i] == LOW) {
+            BUTTON_MIDI_CH = i;
             Serial.print("CANAL ");
             Serial.println(i);
             channelMenuOn = false;
