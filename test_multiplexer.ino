@@ -98,54 +98,89 @@ void buttons() {
 }
 
 void channelMenu() {
-
-  while (digitalRead(CHANNEL_BUTTON_PIN) == LOW) {
-    Serial.println("Botão Canal Pressionado");
+  cbuttonCState = digitalRead(CHANNEL_BUTTON_PIN);
+  while (cbuttonCState == LOW) {
     channelMenuOn = true;
 
-    // read pins from arduino
     for (int i = 0; i < N_BUTTONS; i++) {
       my_mux.channel(i);
       buttonCState[i] = digitalRead(g_common_pin);
-      buttonTimer[i] = millis() - lastDebounceTime[i];
-    }
+      buttonTimer[i] = millis() - lastDebounceTime[i];  //how much time has passed since we pressed the button
 
-    int nButtonsPerMuxSum = N_BUTTONS; // offsets the buttonCState at every mux reading
+      if (buttonTimer[i] > buttonTimeout) {
 
-        for (int i = 0; i < N_BUTTONS; i++) {
-          buttonCState[i + nButtonsPerMuxSum] = digitalRead(g_common_pin);//.readChannel(g_common_pin);
- 
-          if (buttonCState[i + nButtonsPerMuxSum] > buttonMuxThreshold) {
-            buttonCState[i + nButtonsPerMuxSum] = HIGH;
-            Serial.println("Channel Button HIGH");
+        if (buttonCState[i] != buttonPState[i]) {
+
+          lastDebounceTime[i] = millis();
+
+          if (buttonCState[i] == LOW) {
+            Serial.print("CANAL ");
+            Serial.println(i);
+            channelMenuOn = false;
+            cbuttonCState = HIGH;
+          } else {
+            //noteOn(MIDI_CH, NN[i], 0);
+            //MidiUSB.flush();
+            //Serial.print("botao ");
+            //Serial.print(i);
+            //Serial.println(" OFF");
           }
-          else {
-            buttonCState[i + nButtonsPerMuxSum] = LOW;
-             Serial.println("Channel Button LOW");
-          }
-        }
-//nButtonsPerMuxSum += N_BUTTONS_PER_MUX[j];
 
-
-      for (int i = 0; i < N_BUTTONS; i++) { // Read the buttons connected to the Arduino
-        if ((millis() - lastDebounceTime[i]) > debounceDelay) {
-
-          if (buttonPState[i] != buttonCState[i]) {
-            lastDebounceTime[i] = millis();
-
-            if (buttonCState[i] == LOW) {
-              // DO STUFF
-              BUTTON_MIDI_CH = i;
-              Serial.print("Channel ");
-              Serial.println(BUTTON_MIDI_CH);
-
-            }
-            buttonPState[i] = buttonCState[i];
-          }
+          buttonPState[i] = buttonCState[i];
         }
       }
     }
+  }
 
+//   while (digitalRead(CHANNEL_BUTTON_PIN) == LOW) {
+//     Serial.println("Botão Canal Pressionado");
+//     channelMenuOn = true;
+
+//     // read pins from arduino
+//     for (int i = 0; i < N_BUTTONS; i++) {
+//       //my_mux.channel(i);
+//       buttonCState[i] = digitalRead(g_common_pin);
+//       //buttonTimer[i] = millis() - lastDebounceTime[i];
+//     }
+
+//     int nButtonsPerMuxSum = N_BUTTONS; // offsets the buttonCState at every mux reading
+
+//         for (int i = 0; i < N_BUTTONS; i++) {
+//           buttonCState[i + nButtonsPerMuxSum] = digitalRead(g_common_pin);
+ 
+//           if (buttonCState[i + nButtonsPerMuxSum] > buttonMuxThreshold) {
+//             buttonCState[i + nButtonsPerMuxSum] = HIGH;
+//             Serial.println("Channel Button HIGH");
+//           }
+//           else {
+//             Serial.println("to aqui no else");
+//             buttonCState[i + nButtonsPerMuxSum] = LOW;
+//              Serial.println("Channel Button LOW");
+//           }
+//         }
+// //nButtonsPerMuxSum += N_BUTTONS_PER_MUX[j];
+
+
+//       for (int i = 0; i < N_BUTTONS; i++) { // Read the buttons connected to the Arduino
+//         Serial.println("to aqui no FOR");
+//         if ((millis() - lastDebounceTime[i]) > debounceDelay) {
+//             Serial.println("to aqui no IF");
+//           if (buttonPState[i] != buttonCState[i]) {
+//             lastDebounceTime[i] = millis();
+
+//             if (buttonCState[i] == LOW) {
+//               // DO STUFF
+//               BUTTON_MIDI_CH = i;
+//               Serial.print("Channel ");
+//               Serial.println(BUTTON_MIDI_CH);
+
+//             }
+//             buttonPState[i] = buttonCState[i];
+//           }
+//         }
+//       }
+//     }
+//   channelMenuOn = false;
 } //end
 
   void potenciometers() {
