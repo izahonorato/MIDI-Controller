@@ -1,6 +1,26 @@
 #include "MIDIUSB.h"
 #include <CD74HC4067.h>
+#include "FastLED.h"
+//======================================================================
+//LEDs
+//======================================================================
+FASTLED_USING_NAMESPACE
 
+#define DATA_PIN    5
+//#define CLK_PIN   4
+#define LED_TYPE    WS2812
+#define COLOR_ORDER GRB
+#define NUM_LEDS    16
+#define HUE_OFFSET 90
+CRGB leds[NUM_LEDS];
+byte ledIndex[NUM_LEDS] = {15, 8, 7, 0, 14, 9, 6, 1, 13, 10, 5, 2, 12, 11, 4, 3};
+
+#define BRIGHTNESS          96
+#define FRAMES_PER_SECOND  120
+
+byte ch1Hue = 135;
+byte maxHue = 240;
+//===================================================================================
 const int N_BUTTONS = 17;
 const int BUTTON_ARDUINO_PIN[N_BUTTONS] = {};
 const int CHANNEL_BUTTON_PIN = 3;  //BOTÃO SEPARADO
@@ -52,6 +72,18 @@ void setup() {
 
   pinMode(CHANNEL_BUTTON_PIN, INPUT_PULLUP);
   pinMode(g_common_pin, INPUT_PULLUP);
+
+  //FAST LED
+  FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+
+  // set master brightness control
+  //FastLED.setBrightness(BRIGHTNESS);
+
+  setAllLeds(ch1Hue, 30);// set all leds at once with a hue (hue, randomness)
+
+  FastLED.show();
+
+  //////////////////////////////////////
 }
 
 void loop() {
@@ -175,3 +207,5 @@ void channelMenu() {
     midiEventPacket_t event = { 0x0B, 0xB0 | channel, control, value };
     MidiUSB.sendMIDI(event);
   }
+
+  
