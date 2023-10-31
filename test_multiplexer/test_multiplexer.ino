@@ -1,6 +1,6 @@
 #include "MIDIUSB.h"
 #include <CD74HC4067.h>
-#include "FastLED.h"
+#include <FastLED.h>
 //======================================================================
 //LEDs
 //======================================================================
@@ -74,12 +74,13 @@ void setup() {
   pinMode(g_common_pin, INPUT_PULLUP);
 
   //FAST LED
-  FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+  //FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+  FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
 
   // set master brightness control
   //FastLED.setBrightness(BRIGHTNESS);
 
-  setAllLeds(ch1Hue, 30);// set all leds at once with a hue (hue, randomness)
+  //setAllLeds(ch1Hue, 30);// set all leds at once with a hue (hue, randomness)
 
   FastLED.show();
 
@@ -90,6 +91,23 @@ void loop() {
   buttons();
   potenciometers();
   channelMenu();
+
+  for(int dot = 0; dot < NUM_LEDS; dot++) { 
+            leds[dot] = CRGB::Blue;
+            FastLED.show();
+            // clear this led for the next time around the loop
+            leds[dot] = CRGB::Black;
+            delay(60);
+  }
+
+  //leds[0] = CRGB::Blue; 
+ // leds[1] = CRGB::Blue; 
+  //leds[2] = CRGB::Blue; 
+ // leds[3] = CRGB::Blue; 
+ // leds[4] = CRGB::Blue; 
+ // leds[5] = CRGB::Blue; 
+ // FastLED.show();
+ // delay(1000);
 }
 
 void buttons() {
@@ -196,6 +214,7 @@ void channelMenu() {
       }
     }
   }
+  
 
   //Arduino pro micro midi functions MIDIUSB library
   void noteOn(byte channel, byte pitch, byte velocity) {
