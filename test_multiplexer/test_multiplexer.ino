@@ -93,9 +93,15 @@ void loop() {
   channelMenu();
 
   for(int dot = 0; dot < NUM_LEDS; dot++) { 
-            leds[dot] = CRGB::Blue;
+            leds[dot] = CRGB::Green;
             FastLED.show();
             // clear this led for the next time around the loop
+            leds[dot] = CRGB::Black;
+            delay(60);
+
+            leds[dot] = CRGB::Red;
+            FastLED.show();
+
             leds[dot] = CRGB::Black;
             delay(60);
   }
