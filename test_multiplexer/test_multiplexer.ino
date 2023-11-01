@@ -20,6 +20,7 @@ byte ledIndex[NUM_LEDS] = {15, 8, 7, 0, 14, 9, 6, 1, 13, 10, 5, 2, 12, 11, 4, 3}
 
 byte ch1Hue = 135;
 byte maxHue = 240;
+int dot;
 //===================================================================================
 const int N_BUTTONS = 17;
 const int BUTTON_ARDUINO_PIN[N_BUTTONS] = {};
@@ -93,27 +94,20 @@ void loop() {
   channelMenu();
 
   for(int dot = 0; dot < NUM_LEDS; dot++) { 
-            leds[dot] = CRGB::Green;
+            leds[dot] = CRGB::Blue;
             FastLED.show();
+
             // clear this led for the next time around the loop
-            leds[dot] = CRGB::Black;
-            delay(60);
+            //leds[dot] = CRGB::Black;
+            //delay(60);
 
-            leds[dot] = CRGB::Red;
-            FastLED.show();
+            //leds[dot] = CRGB::Red;
+           // FastLED.show();
 
-            leds[dot] = CRGB::Black;
-            delay(60);
+           // leds[dot] = CRGB::Black;
+           // delay(60);
   }
 
-  //leds[0] = CRGB::Blue; 
- // leds[1] = CRGB::Blue; 
-  //leds[2] = CRGB::Blue; 
- // leds[3] = CRGB::Blue; 
- // leds[4] = CRGB::Blue; 
- // leds[5] = CRGB::Blue; 
- // FastLED.show();
- // delay(1000);
 }
 
 void buttons() {
@@ -137,6 +131,11 @@ void buttons() {
           Serial.print("botao ");
           Serial.print(i);
           Serial.println(" ON");
+
+          leds[i] = CRGB::Pink;
+          FastLED.show();
+          delay(200);
+
         } else {
           noteOn(MIDI_CH, NN[i], 0);
           MidiUSB.flush();
@@ -156,6 +155,11 @@ void channelMenu() {
   while (cbuttonCState == LOW) {
     channelMenuOn = true;
 
+    for (int dot=0; dot < NUM_LEDS; dot++){
+      leds[dot] = CRGB::Purple;
+      FastLED.show();
+    }
+
     for (int i = 0; i < N_BUTTONS; i++) {
       my_mux.channel(i);
       buttonCState[i] = digitalRead(g_common_pin);
@@ -171,8 +175,11 @@ void channelMenu() {
             BUTTON_MIDI_CH = i;
             Serial.print("CANAL ");
             Serial.println(i);
-            channelMenuOn = false;
+            //channelMenuOn = false;
             cbuttonCState = HIGH;
+            leds[i] = CRGB::Red;
+            FastLED.show();
+            delay(200);
           } else {
             //noteOn(MIDI_CH, NN[i], 0);
             //MidiUSB.flush();
