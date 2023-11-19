@@ -6,7 +6,7 @@
 //======================================================================
 FASTLED_USING_NAMESPACE
 
-#define DATA_PIN    5
+#define DATA_PIN    3
 //#define CLK_PIN   4
 #define LED_TYPE    WS2812
 #define COLOR_ORDER GRB
@@ -24,7 +24,7 @@ int dot;
 //===================================================================================
 const int N_BUTTONS = 17;
 const int BUTTON_ARDUINO_PIN[N_BUTTONS] = {};
-const int CHANNEL_BUTTON_PIN = 3;  //BOTÃO SEPARADO
+const int CHANNEL_BUTTON_PIN = 5;  //BOTÃO SEPARADO
 //int buttonMuxThreshold = 300;
 int buttonCState[N_BUTTONS] = { 0 };
 int buttonPState[N_BUTTONS] = { 0 };
@@ -132,9 +132,11 @@ void buttons() {
           Serial.print(i);
           Serial.println(" ON");
 
-          leds[i] = CRGB::Pink;
-          FastLED.show();
-          delay(200);
+          if (i < 4){
+            leds[i+12] = CRGB::Red;
+            FastLED.show();
+            delay(400);
+          }
 
         } else {
           noteOn(MIDI_CH, NN[i], 0);
