@@ -13,8 +13,8 @@ FASTLED_USING_NAMESPACE
 #define NUM_LEDS    16
 #define HUE_OFFSET 90
 CRGB leds[NUM_LEDS];
-//byte ledIndex[NUM_LEDS] = {15, 8, 7, 0, 14, 9, 6, 1, 13, 10, 5, 2, 12, 11, 4, 3};
-byte ledIndex[NUM_LEDS] = {3, 7, 11, 15, 2, 6, 10, 14, 1, 5, 9, 13, 0, 4, 8, 12};
+//byte ledIndex[NUM_LEDS] = {3, 7, 11, 15, 2, 6, 10, 14, 1, 5, 9, 13, 0, 4, 8, 12};
+int ledIndex[NUM_LEDS] = {12,13,14,15,11,10,9,8,4,5,6,7,3,2,1,0}; //reindexando os LEDS
 
 #define BRIGHTNESS          96
 #define FRAMES_PER_SECOND  120
@@ -125,18 +125,7 @@ void buttons() {
           //   delay(500);
           // }
 
-          // if (i >= 8 && i <= 11){
-          //   leds[i-4] = CRGB::Red;
-          //   FastLED.show();
-          //   delay(500);
-          // }
-
-          // if (i >= 4 && i <= 7){
-          //   leds[i+1] = CRGB::Red;
-          //   FastLED.show();
-          //   delay(500);
-          // }
-           leds[i] = CRGB::Red;
+           leds[ledIndex[i]] = CRGB::Red;
            FastLED.show();
            delay(500);
 
@@ -185,13 +174,13 @@ void channelMenu() {
             Serial.println(i);
             //channelMenuOn = false;
             cbuttonCState = HIGH;
-            leds[i] = CRGB::Red;
+            leds[ledIndex[i]] = CRGB::Red;
             FastLED.show();
             delay(200);
           } else {
             noteOn(MIDI_CH, NN[i], 0);
             MidiUSB.flush();
-            leds[i] = CRGB::Blue;
+            leds[ledIndex[i]] = CRGB::Blue;
             FastLED.show();
             //Serial.print("botao ");
             //Serial.print(i);
@@ -257,5 +246,7 @@ void channelMenu() {
       leds[i].setHue(hue_  + offset);
     }
   }
+
+
 
   
