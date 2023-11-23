@@ -1,31 +1,9 @@
 #include "MIDIUSB.h"
 #include <CD74HC4067.h>
-#include <FastLED.h>
-//======================================================================
-//LEDs
-//======================================================================
-FASTLED_USING_NAMESPACE
 
-#define DATA_PIN    3
-//#define CLK_PIN   4
-#define LED_TYPE    WS2812
-#define COLOR_ORDER GRB
-#define NUM_LEDS    16
-#define HUE_OFFSET 90
-CRGB leds[NUM_LEDS];
-//byte ledIndex[NUM_LEDS] = {3, 7, 11, 15, 2, 6, 10, 14, 1, 5, 9, 13, 0, 4, 8, 12};
-int ledIndex[NUM_LEDS] = {12,13,14,15,11,10,9,8,4,5,6,7,3,2,1,0}; //reindexando os LEDS
-
-#define BRIGHTNESS          96
-#define FRAMES_PER_SECOND  120
-byte midiChMenuColor = 200;
-byte ch1Hue = 135;
-byte maxHue = 240;
-int dot;
-//===================================================================================
 const int N_BUTTONS = 17;
 const int BUTTON_ARDUINO_PIN[N_BUTTONS] = {};
-const int CHANNEL_BUTTON_PIN = 5;  //BOTÃO SEPARADO
+const int CHANNEL_BUTTON_PIN = 3;  //BOTÃO SEPARADO
 //int buttonMuxThreshold = 300;
 int buttonCState[N_BUTTONS] = { 0 };
 int buttonPState[N_BUTTONS] = { 0 };
@@ -37,7 +15,6 @@ unsigned long debounceDelay = 5;
 byte velocity[N_BUTTONS] = { 127 };
 unsigned long buttonTimer[N_BUTTONS] = { 0 };
 int buttonTimeout = 10;
-int BUTTON_MIDI_CH;
 
 //=============================================================================================================
 const int N_POTS = 8;
@@ -74,27 +51,12 @@ void setup() {
 
   pinMode(CHANNEL_BUTTON_PIN, INPUT_PULLUP);
   pinMode(g_common_pin, INPUT_PULLUP);
-
-  //FAST LED
-  //FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
-  FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
-  setAllLeds(ch1Hue, 30);// set all leds at once with a hue (hue, randomness)
-
-  FastLED.show();
-
-  //////////////////////////////////////
 }
 
 void loop() {
   buttons();
   potenciometers();
   channelMenu();
-
-   for(int dot = 0; dot < NUM_LEDS; dot++) { 
-     leds[dot] = CRGB::Blue;
-     FastLED.show();
-   }
-
 }
 
 void buttons() {
@@ -118,18 +80,6 @@ void buttons() {
           Serial.print("botao ");
           Serial.print(i);
           Serial.println(" ON");
-          
-          // if (i < 4){
-          //   leds[i+12] = CRGB::Red;
-          //   FastLED.show();
-          //   delay(500);
-          // }
-
-           leds[ledIndex[i]] = CRGB::Red;
-           FastLED.show();
-           delay(500);
-
-
         } else {
           noteOn(MIDI_CH, NN[i], 0);
           MidiUSB.flush();
@@ -149,14 +99,6 @@ void channelMenu() {
   while (cbuttonCState == LOW) {
     channelMenuOn = true;
 
-    setAllLeds(midiChMenuColor, 0); // turn all lights into the menu lights
-    leds[ledIndex[BUTTON_MIDI_CH]].setHue(midiChMenuColor + 60);
-
-     for (int dot=0; dot < NUM_LEDS; dot++){
-       leds[dot] = CRGB::Purple;
-       FastLED.show();
-     }
-
     for (int i = 0; i < N_BUTTONS; i++) {
       my_mux.channel(i);
       buttonCState[i] = digitalRead(g_common_pin);
@@ -169,19 +111,13 @@ void channelMenu() {
           lastDebounceTime[i] = millis();
 
           if (buttonCState[i] == LOW) {
-            BUTTON_MIDI_CH = i;
             Serial.print("CANAL ");
             Serial.println(i);
-            //channelMenuOn = false;
+            channelMenuOn = false;
             cbuttonCState = HIGH;
-            leds[ledIndex[i]] = CRGB::Red;
-            FastLED.show();
-            delay(200);
           } else {
-            noteOn(MIDI_CH, NN[i], 0);
-            MidiUSB.flush();
-            leds[ledIndex[i]] = CRGB::Blue;
-            FastLED.show();
+            //noteOn(MIDI_CH, NN[i], 0);
+            //MidiUSB.flush();
             //Serial.print("botao ");
             //Serial.print(i);
             //Serial.println(" OFF");
@@ -226,7 +162,6 @@ void channelMenu() {
       }
     }
   }
-  
 
   //Arduino pro micro midi functions MIDIUSB library
   void noteOn(byte channel, byte pitch, byte velocity) {
@@ -238,15 +173,3 @@ void channelMenu() {
     midiEventPacket_t event = { 0x0B, 0xB0 | channel, control, value };
     MidiUSB.sendMIDI(event);
   }
-
-  void setAllLeds(byte hue_, byte randomness_) {
-
-    for (int i = 0; i < NUM_LEDS; i++) {
-      byte offset = random(0, randomness_);
-      leds[i].setHue(hue_  + offset);
-    }
-  }
-
-
-
-  
