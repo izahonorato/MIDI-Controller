@@ -14,7 +14,7 @@ FASTLED_USING_NAMESPACE
 #define HUE_OFFSET 90
 CRGB leds[NUM_LEDS];
 //byte ledIndex[NUM_LEDS] = {3, 7, 11, 15, 2, 6, 10, 14, 1, 5, 9, 13, 0, 4, 8, 12};
-int ledIndex[NUM_LEDS] = {12,13,14,15,11,10,9,8,4,5,6,7,3,2,1,0}; //reindexando os LEDS
+byte ledIndex[NUM_LEDS] = {12,13,14,15,11,10,9,8,4,5,6,7,3,2,1,0}; //reindexando os LEDS
 
 #define BRIGHTNESS          96
 #define FRAMES_PER_SECOND  120
@@ -47,12 +47,13 @@ int potPState[N_POTS] = { 0 };  //estado anterior do potenciômetro
 int midiState[N_POTS] = { 0 };
 int midiPState[N_POTS] = { 0 };
 int CC[N_POTS] = { 1, 2, 3, 4, 5, 6, 7, 8 };  //int CC[N_POTS] = {11,12};
-int potThreshold = 35;
+int potThreshold = 50;
 unsigned long lastPotTime[N_POTS] = { 0 };
 unsigned long potTimer[N_POTS] = { 0 };
 int potTimeout = 150;
 int potVar = 0;
 byte midiCh = 1; //* Canal MIDI a ser usado
+byte NOTE = 36;
 byte cc = 1; //* O mais baixo MIDI CC a ser usado
 
 bool channelMenuOn = false;
@@ -66,7 +67,7 @@ const int g_common_pin = 10;
 
 void setup() {
 
-  Serial.begin(115200);
+  //Serial.begin(115200);
 
   for (int i = 0; i < N_BUTTONS; i++) {
     pinMode(BUTTON_ARDUINO_PIN[i], INPUT_PULLUP);
@@ -76,8 +77,8 @@ void setup() {
   pinMode(g_common_pin, INPUT_PULLUP);
 
   //FAST LED
-  //FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
-  FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
+  //FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
+  FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
   setAllLeds(ch1Hue, 30);// set all leds at once with a hue (hue, randomness)
 
   FastLED.show();
@@ -86,14 +87,15 @@ void setup() {
 }
 
 void loop() {
+  MIDIread();
   buttons();
   potenciometers();
   channelMenu();
 
-   for(int dot = 0; dot < NUM_LEDS; dot++) { 
-     leds[dot] = CRGB::Blue;
-     FastLED.show();
-   }
+  //  for(int dot = 0; dot < NUM_LEDS; dot++) { 
+  //    leds[dot] = CRGB::Blue;
+  //    FastLED.show();
+  //  }
 
 }
 
@@ -125,9 +127,9 @@ void buttons() {
           //   delay(500);
           // }
 
-           leds[ledIndex[i]] = CRGB::Red;
-           FastLED.show();
-           delay(500);
+          //  leds[ledIndex[i]] = CRGB::Red;
+          //  FastLED.show();
+          //  delay(500);
 
 
         } else {
@@ -152,10 +154,10 @@ void channelMenu() {
     setAllLeds(midiChMenuColor, 0); // turn all lights into the menu lights
     leds[ledIndex[BUTTON_MIDI_CH]].setHue(midiChMenuColor + 60);
 
-     for (int dot=0; dot < NUM_LEDS; dot++){
-       leds[dot] = CRGB::Purple;
-       FastLED.show();
-     }
+    //  for (int dot=0; dot < NUM_LEDS; dot++){
+    //    leds[dot] = CRGB::Purple;
+    //    FastLED.show();
+    //  }
 
     for (int i = 0; i < N_BUTTONS; i++) {
       my_mux.channel(i);
@@ -174,9 +176,9 @@ void channelMenu() {
             Serial.println(i);
             //channelMenuOn = false;
             cbuttonCState = HIGH;
-            leds[ledIndex[i]] = CRGB::Red;
-            FastLED.show();
-            delay(200);
+            // leds[ledIndex[i]] = CRGB::Red;
+            // FastLED.show();
+            // delay(200);
           } else {
             noteOn(MIDI_CH, NN[i], 0);
             MidiUSB.flush();
@@ -211,8 +213,8 @@ void channelMenu() {
       if (potTimer[i] < potTimeout) {
         if (midiPState[i] != midiState[i]) {
 
-          //controlChange(MIDI_CH, CC[i], midiState[i]);
-          controlChange(midiCh, cc + i, midiState[i]);
+          controlChange(MIDI_CH, CC[i], midiState[i]);
+          //controlChange(midiCh, cc + i, midiState[i]);
           MidiUSB.flush();
 
           Serial.print("Pot");
@@ -234,9 +236,87 @@ void channelMenu() {
     MidiUSB.sendMIDI(noteOn);
   }
 
+  void noteOff(byte channel, byte pitch, byte velocity) {
+    midiEventPacket_t noteOff = {0x08, 0x80 | channel, pitch, velocity};
+    MidiUSB.sendMIDI(noteOff);
+  }
+
   void controlChange(byte channel, byte control, byte value) {
     midiEventPacket_t event = { 0x0B, 0xB0 | channel, control, value };
     MidiUSB.sendMIDI(event);
+  }
+
+  void MIDIread() {
+
+    midiEventPacket_t rx = MidiUSB.read();
+    switch (rx.header) {
+      case 0:
+        break; //No pending events
+
+      case 0x9:
+        handlennOn(
+          rx.byte1 & 0xF,  //channel
+          rx.byte2,        //pitch
+          rx.byte3         //velocity
+        );
+        break;
+
+      case 0x8:
+        handlennOff(
+          rx.byte1 & 0xF,  //channel
+          rx.byte2,        //pitch
+          rx.byte3         //velocity
+        );
+        break;
+    }
+
+    if (rx.header != 0) {
+      //Serial.print("Unhandled MIDI message: ");
+      //      Serial.print(rx.byte1 & 0xF, DEC);
+      //      Serial.print("-");
+      //      Serial.print(rx.byte1, DEC);
+      //      Serial.print("-");
+      //      Serial.print(rx.byte2, DEC);
+      //      Serial.print("-");
+      //      Serial.println(rx.byte3, DEC);
+    }
+
+  }
+
+  void handleControlChange(byte channel, byte number, byte value)
+  {
+
+  }
+
+  void handlennOn(byte channel, byte number, byte value) {
+
+    if (channel == BUTTON_MIDI_CH) {
+
+      int ledN = number - NOTE;
+      byte tempHue = map(value, 0, 127, ch1Hue, maxHue);
+
+      leds[ledIndex[ledN]].setHue(tempHue);
+
+      FastLED.show();
+      //      // insert a delay to keep the framerate modest
+      //      FastLED.delay(1000 / FRAMES_PER_SECOND);
+    }
+
+  }
+
+  void handlennOff(byte channel, byte number, byte value) {
+
+    if (channel == BUTTON_MIDI_CH) {
+      int ledN = number - NOTE;
+
+      byte offset = random(0, 20);
+      leds[ledIndex[ledN]].setHue(ch1Hue  + offset);
+
+      FastLED.show();
+      //      // insert a delay to keep the framerate modest
+      //      FastLED.delay(1000 / FRAMES_PER_SECOND);
+    }
+
   }
 
   void setAllLeds(byte hue_, byte randomness_) {
