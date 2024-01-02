@@ -23,7 +23,7 @@ byte ch1Hue = 135;
 byte maxHue = 240;
 int dot;
 //===================================================================================
-const int N_BUTTONS = 17;
+const int N_BUTTONS = 16;
 const int BUTTON_ARDUINO_PIN[N_BUTTONS] = {};
 const int CHANNEL_BUTTON_PIN = 5;  //BOTÃO SEPARADO
 //int buttonMuxThreshold = 300;
@@ -59,7 +59,9 @@ byte cc = 1; //* O mais baixo MIDI CC a ser usado
 bool channelMenuOn = false;
 
 byte MIDI_CH = 0;  //0 - 15
-byte NN[N_BUTTONS] = { 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36 };
+//byte NN[N_BUTTONS] = { 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36 };
+//byte NN[N_BUTTONS] = { 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51 };
+byte NN[N_BUTTONS] = { 36, 40, 44, 48, 37, 41, 45, 49, 38, 42 , 46, 50, 39, 43, 47,51  };
 
 CD74HC4067 my_mux(16, 14, 15, 2);
 
